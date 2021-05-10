@@ -96,26 +96,33 @@ wait_loop:
 
 	mov word [timer_interrupt_counter], 0x0
 
+	mov cx, [snake.head]
+	call fun_get_direction_pointer
+	mov al, [snake.direction]
+	mov [bx], al
+	call fun_get_next
+	call fun_get_symbol_pointer
+	mov al, [es:bx]
+	cmp al, SNAKE_SYMBOL
+	je game_over
+	cmp al, FOOD_SYMBOL
+	je eat_food
+	mov byte [es:bx], SNAKE_SYMBOL
+	mov [snake.head], cx
+
 	mov cx, [snake.tail]
 	call fun_get_symbol_pointer
 	mov byte [es:bx], EMPTY_SYMBOL
 	call fun_get_next
 	mov [snake.tail], cx
 
-	mov cx, [snake.head]
-	call fun_get_direction_pointer
-	mov al, [snake.direction]
-	mov [bx], al
-	call fun_get_next
-	mov [snake.head], cx
-	call fun_get_symbol_pointer
-	mov byte [es:bx], SNAKE_SYMBOL
-
 	jmp wait_loop
 
 eat_food:
 
 game_over:
+	hlt
+	jmp game_over
 
 my_timer_interrupt_handler:
 	push ax
@@ -219,7 +226,6 @@ down:
 	mov ch, ah
 	ret
 
-	; C: ah == al ? ah = bl : ah = bh
 fun_compare:
 	cmp ah, al
 	je equal
@@ -229,8 +235,6 @@ equal:
 	mov ah, bh
 	ret
 
-	; in: dh=SYMBOL, ch=y, cl=x
-	; modified: ax, bx
 fun_get_symbol_pointer:
 	mov al, ch
 	mov bl, VIDEO_SCREEN_WIDTH
